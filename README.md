@@ -4,7 +4,7 @@ User
 ##Module for ZF2
 It uses 
 - Doctrine 2
-- [BjyAuthorize](https://github.com/bjyoungblood/BjyAuthorize) for authorization
+- [BjyAuthorize](https://github.com/bjyoungblood/BjyAuthorize) for ACL
 
 Version
 ----
