@@ -22,7 +22,7 @@ composer install
 cp -r User/ path/to/zf2/module/
 ```
 
-####Add following lines to config/autoload/bjyauthorize.gloabal.php
+####Add following lines to config/autoload/bjyauthorize.global.php
 ```php
 return array(
     'bjyauthorize' => array(
