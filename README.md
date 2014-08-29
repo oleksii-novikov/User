@@ -1,7 +1,7 @@
 User
 =========
 
-Module for ZF2
+##Module for ZF2
 It uses 
 - Doctrine 2
 - [BjyAuthorize](https://github.com/bjyoungblood/BjyAuthorize) for authorization
@@ -15,7 +15,7 @@ Installation
 --------------
 
 ```sh
-git clone [git-repo-url] user/User
+git clone [git-repo-url] user
 cd user
 #install composer
 composer install
@@ -53,6 +53,21 @@ return array(
     )
 )
 ```
+####Activate next modules in specified order in application.config.php
+```php
+return array(
+    'modules' => array(
+		//...
+        'DoctrineModule',
+        'DoctrineORMModule',
+        'BjyAuthorize',
+        'User'
+    )
+	//...
+)
+```
+
+
 
 License
 ----
