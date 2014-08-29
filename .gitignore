@@ -1,0 +1,6 @@
+.idea/*
+nbproject/*
+zf.php
+composer.phar
+vendor/
+
