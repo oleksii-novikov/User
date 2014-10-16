@@ -19,16 +19,6 @@ class SignupForm extends Form
             'type' => 'Zend\Form\Element\Csrf',
         ));
         $this->add(array(
-            'name' => 'username',
-            'type' => 'text',
-            'options' => array(
-                'min' => 3,
-                'max' => 25,
-                'label' => 'username',
-            ),
-            'attributes' => ['class' => 'form-control']
-        ));
-        $this->add(array(
             'name' => 'email',
             'type' => 'text',
             'options' => array(

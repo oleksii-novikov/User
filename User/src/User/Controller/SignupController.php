@@ -25,17 +25,18 @@ class SignupController extends AbstractActionController
                 try {
                     $hydrator = new DoctrineHydrator($objectManager);
                     $hydrator->hydrate($form->getData(), $user);
-                    $salt = md5(microtime(false) . rand(11111, 99999));
-
-                    $user->setSalt($salt);
-                    $user->setPassword(Service\User::encrypt($user, $data['password']));
                     $user->setRole($user::ROLE_USER);
                     $user->setConfirm($user->generateConfirm());
                     $user->setStatus($user::STATUS_UNCONFIRMED);
 
                     $objectManager->persist($user);
                     $objectManager->flush();
+
                     $html = $this->forward()->dispatch('User\Controller\Mail', array('action' => 'signup', 'user' => $user));
+                    /** @var $authService Service\Auth */
+                    $authService = $this->getServiceLocator()->get('User\Service\Auth');
+                    $authService->generateEquals($user, $data['password']);
+
                     /** @var $userService Service\User */
                     $userService = $this->getServiceLocator()->get('User\Service\User');
                     $userService->signupMail($user, $html);

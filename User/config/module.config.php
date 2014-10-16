@@ -19,10 +19,10 @@ return array(
         'authentication' => array(
             'orm_default' => array(
                 'object_manager' => 'Doctrine\ORM\EntityManager',
-                'identity_class' => 'User\Entity\User',
-                'identity_property' => 'email',
-                'credential_property' => 'password',
-                'credential_callable' => '\User\Service\User::encrypt'
+                'identity_class' => 'User\Entity\Auth',
+                'identity_property' => 'foreignKey',
+                'credential_property' => 'token',
+                'credential_callable' => '\User\Service\Auth::encrypt'
             ),
         ),
     ),
@@ -72,6 +72,8 @@ return array(
             'User\Controller\Signup' => 'User\Controller\SignupController',
             'User\Controller\Auth' => 'User\Controller\AuthController',
             'User\Controller\Mail' => 'User\Controller\MailController',
+            'User\Controller\Management' => 'User\Controller\ManagementController',
+            'User\Controller\Profile' => 'User\Controller\ProfileController',
         ),
     ),
     'view_manager' => array(
@@ -95,6 +97,9 @@ return array(
             'User\Service\User' => function($sm) {
                 return new User\Service\User($sm);
             },
+            'User\Service\Auth' => function($sm) {
+                return new User\Service\Auth($sm);
+            },
             'User\Provider\Identity\DoctrineProvider' => function($sm) {
                 $entityManager = $sm->get('Doctrine\ORM\EntityManager');
                 $authService = $sm->get('Zend\Authentication\AuthenticationService');
@@ -112,7 +117,7 @@ return array(
             'BjyAuthorize\Guard\Controller' => array(
                 array(
                     'controller' => 'User\Controller\Auth',
-                    'action' => array('login', 'logout'),
+//                    'action' => array('login', 'logout'),
                     'roles' => array('guest', 'user'),
                 ),
                 array(
@@ -124,6 +129,16 @@ return array(
                     'controller' => 'User\Controller\Mail',
                     'action' => array('index'),
                     'roles' => array('admin'),
+                ),
+                array(
+                    'controller' => 'User\Controller\Management',
+                    'action' => array('create'),
+                    'roles' => array('user'),
+                ),
+                array(
+                    'controller' => 'User\Controller\Profile',
+//                    'action' => array('index'),
+                    'roles' => array('user'),
                 )
             ),
         ),

@@ -4,13 +4,17 @@ namespace User\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
+use Zend\Form\Annotation;
+use Zend\ServiceManager\ServiceManager;
 
 /**
  * An example of how to implement a role aware user entity.
  *
  * @ORM\Entity(repositoryClass="User\Repository\User")
  * @ORM\Table(name="users")
- *
+ * @Annotation\Name("user")
+ * @Annotation\Hydrator("Zend\Stdlib\Hydrator\ObjectProperty")
+ * @ORM\HasLifecycleCallbacks
  * @author Oleksii Novikov
  */
 class User
@@ -25,66 +29,111 @@ class User
 
     /**
      * @var int
+     * @Annotation\Type("Zend\Form\Element\Text")
+     * @Annotation\Exclude
      * @ORM\Id
-     * @ORM\Column(type="integer")
+     * @ORM\Column(type="integer", options={"unsigned"=true})
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     protected $id;
 
     /**
      * @var string
-     * @ORM\Column(type="string", length=255, unique=true, nullable=true)
-     */
-    protected $username;
-
-    /**
-     * @var string
-     * @ORM\Column(type="string", unique=true,  length=255)
+     * @Annotation\Type("Zend\Form\Element\Email")
+     * @Annotation\Required(false)
+     * @Annotation\Filter({"name":"StringTrim"})
+     * @Annotation\Attributes({"class":"form-control"})
+     * @Annotation\Validator({"name":"EmailAddress"})
+     * Annotation\Validator({"name":"Db\NoRecordExists", "options":{"adapter": "Db\Adapter", "table" : "users", "fields" : "email"}})
+     * @ORM\Column(type="string", unique=true, nullable=true, length=255)
      */
     protected $email;
 
     /**
      * @var string
+     * @Annotation\Type("Zend\Form\Element\Text")
+     * @Annotation\Required(true)
+     * @Annotation\Filter({"name":"StringTrim"})
+     * @Annotation\Attributes({"class":"form-control"})
      * @ORM\Column(type="string", length=50, nullable=true)
      */
     protected $displayName;
 
     /**
      * @var string
-     * @ORM\Column(type="string", length=128)
-     */
-    protected $password;
-
-    /**
-     * @var string
-     * @ORM\Column(type="string", length=128)
-     */
-    protected $salt;
-
-    /**
-     * @var string
-     * @ORM\Column(type="string", length=128, options={"default" = "user"})
+     * @Annotation\Type("Zend\Form\Element\Select")
+     * @Annotation\Required(false)
+     * @Annotation\Options({"label":"Role:", "value_options":{"1":"Member", "2":"Admin"}})
+     * @Annotation\Attributes({"class":"form-control"})
+     * @ORM\Column(type="string", length=128, options={"default" = "Member"})
      */
     protected $role;
 
     /**
      * @var string
-     * @ORM\Column(type="string", length=128, options={"default" = null})
+     * @Annotation\Exclude
+     * @ORM\Column(type="string", nullable=true, length=128)
      */
     protected $confirm;
 
     /**
      * @var string
-     * @ORM\Column(type="string", length=128, nullable=false, columnDefinition="ENUM('active','inactive','unconfirmed')", options={"default" = "unconfirmed"})
+     * @Annotation\Type("Zend\Form\Element\Select")     *
+     * @Annotation\Options({"label":"Satus:", "value_options":{"active" : "active", "inactive" : "inactive", "unconfirmed" : "unconfirmed"}})
+     * @Annotation\Attributes({"class":"form-control"})
+     * @ORM\Column(type="string", nullable=false, columnDefinition="ENUM('active','inactive','unconfirmed')", options={"default" = "unconfirmed"})
      */
     protected $status;
 
     /**
-     * Initialies the roles variable.
+     * @var created
+     * @Annotation\Exclude
+     * @ORM\Column(type="datetime")
+     */
+    protected $created;
+
+    /**
+     * @var updated
+     * @Annotation\Exclude
+     * @ORM\Column(type="datetime")
+     */
+    protected $updated;
+
+    /**
+     * @Annotation\Exclude
+     * @ORM\OneToMany(targetEntity="Auth", mappedBy="user", cascade={"remove"})
+     */
+    private $auths;
+
+    /**
+     * Initialies the auths variable.
      */
     public function __construct()
     {
-        $this->roles = new ArrayCollection();
+        $this->auths = new ArrayCollection();
+    }
+
+    /**
+     * @return ArrayCollection
+     */
+    public function getAuths()
+    {
+        return $this->auths;
+    }
+
+    /**
+     * Now we tell doctrine that before we persist or update we call the updatedTimestamps() function.
+     *
+     * @ORM\PrePersist
+     * @ORM\PreUpdate
+     */
+    public function updatedTimestamps()
+    {
+        $this->setUpdated(new \DateTime(date('Y-m-d H:i:s')));
+
+        if ($this->getCreated() == null) {
+            $this->setCreated(new \DateTime(date('Y-m-d H:i:s')));
+        }
     }
 
     /**
@@ -107,28 +156,6 @@ class User
     public function setId($id)
     {
         $this->id = (int) $id;
-    }
-
-    /**
-     * Get username.
-     *
-     * @return string
-     */
-    public function getUsername()
-    {
-        return $this->username;
-    }
-
-    /**
-     * Set username.
-     *
-     * @param string $username
-     *
-     * @return void
-     */
-    public function setUsername($username)
-    {
-        $this->username = $username;
     }
 
     /**
@@ -173,50 +200,6 @@ class User
     public function setDisplayName($displayName)
     {
         $this->displayName = $displayName;
-    }
-
-    /**
-     * Get password.
-     *
-     * @return string
-     */
-    public function getPassword()
-    {
-        return $this->password;
-    }
-
-    /**
-     * Set password.
-     *
-     * @param string $password
-     *
-     * @return void
-     */
-    public function setPassword($password)
-    {
-        $this->password = $password;
-    }
-
-    /**
-     * Get salt.
-     *
-     * @return string
-     */
-    public function getSalt()
-    {
-        return $this->salt;
-    }
-
-    /**
-     * Set salt.
-     *
-     * @param string salt
-     *
-     * @return void
-     */
-    public function setSalt($salt)
-    {
-        $this->salt = $salt;
     }
 
     /**
@@ -280,11 +263,55 @@ class User
     }
 
     /**
+     * Get created.
+     *
+     * @return string
+     */
+    public function getCreated()
+    {
+        return $this->created;
+    }
+
+    /**
+     * Set created.
+     *
+     * @param string $created
+     *
+     * @return void
+     */
+    public function setCreated($created)
+    {
+        $this->created = $created;
+    }
+
+    /**
+     * Get updated.
+     *
+     * @return string
+     */
+    public function getUpdated()
+    {
+        return $this->updated;
+    }
+
+    /**
+     * Set updated.
+     *
+     * @param string $updated
+     *
+     * @return void
+     */
+    public function setUpdated($updated)
+    {
+        $this->updated = $updated;
+    }
+
+    /**
      * @return string
      */
     public function generateConfirm()
     {
-        return md5($this->getUsername() . microtime(false) . $this->getSalt());
+        return md5($this->getId() . microtime(false) . $this->getEmail());
     }
 
     /**
@@ -296,5 +323,21 @@ class User
         $this->setConfirm(null);
 
         return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isActive()
+    {
+        return $this->getStatus() == self::STATUS_ACTIVE;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isUnconfirmed()
+    {
+        return $this->getStatus() == self::STATUS_UNCONFIRMED;
     }
 }

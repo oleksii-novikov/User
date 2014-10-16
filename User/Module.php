@@ -1,6 +1,8 @@
 <?php
 namespace User;
 
+use Zend\Authentication\AuthenticationService;
+
 class Module
 {
     public function getConfig()

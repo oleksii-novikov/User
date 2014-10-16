@@ -38,19 +38,6 @@ class User
 
     /**
      * @param \User\Entity\User $user
-     * @param $passwordGiven
-     * @return string
-     */
-    public static function encrypt(\User\Entity\User $user, $passwordGiven)
-    {
-        $bcrypt = new Bcrypt;
-        $bcrypt->setSalt($user->getSalt());
-
-        return $bcrypt->create($passwordGiven);
-    }
-
-    /**
-     * @param \User\Entity\User $user
      * @param $content
      */
     public function signupMail(\User\Entity\User $user, $content)
@@ -69,7 +56,7 @@ class User
         /** @var \Zend\Mail\Message $message */
         $message = $this->getServiceLocator()->get('mail.message');
         $message
-            ->addTo($user->getEmail(), $user->getUsername())
+            ->addTo($user->getEmail())
             ->setSubject("Sign up")
             ->setBody($body);
 

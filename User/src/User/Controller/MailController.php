@@ -16,7 +16,7 @@ class MailController extends AbstractActionController
     {
         $user = $this->params('user');
         $model = new ViewModel(['user' => $user]);
-        $model->setTemplate('mail/signup');
+        $model->setTemplate('user/mail/signup');
         $html = $this->getServiceLocator()->get('ViewRenderer')->render($model);
 
         return $html;
