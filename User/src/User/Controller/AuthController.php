@@ -178,7 +178,7 @@ class AuthController extends AbstractActionController
             /** @var \User\Entity\Auth $auth */
             $auth = $objectManager
                 ->getRepository('User\Entity\Auth')
-                ->getAuthRow(Auth::PROVIDER_TWITTER, $graphObject->getProperty('id'));
+                ->getAuthRow(Auth::PROVIDER_FACEBOOK, $graphObject->getProperty('id'));
 
             if ($auth) {
                 $user = $auth->getUser();
