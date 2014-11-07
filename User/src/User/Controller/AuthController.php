@@ -2,6 +2,9 @@
 
 namespace User\Controller;
 
+use Facebook\FacebookRedirectLoginHelper;
+use Facebook\FacebookRequest;
+use Facebook\FacebookSession;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 use Zend\Mvc\Controller\Plugin\FlashMessenger;
@@ -106,8 +109,7 @@ class AuthController extends AbstractActionController
                     /** @var \User\Entity\User $user */
                     $user = $user = new \User\Entity\User();
                     //todo: need to be checked for unique
-                    $user->setUsername($token->screen_name);
-//                    $user->setDisplayName($twitterUser->name);
+                    $user->setDisplayName($token->screen_name);
                     $user->setRole($user::ROLE_USER);
                     $user->activate();
                     $objectManager->persist($user);
@@ -140,5 +142,86 @@ class AuthController extends AbstractActionController
             $this->flashMessenger()->addErrorMessage("Invalid callback request. Oops. Sorry.");
             return $this->redirect()->toRoute('home');
         }
+    }
+
+    public function facebookAction()
+    {
+        $config = $this->getServiceLocator()->get('config')['facebook'];
+        $config['callbackUrl'] = $this->url()->fromRoute('user/default', ['controller' => 'auth', 'action' => 'facebook-callback'], ['force_canonical' => true]);
+        FacebookSession::setDefaultApplication($config['appId'], $config['appSecret']);
+        $helper = new FacebookRedirectLoginHelper($config['callbackUrl']);
+        $this->redirect()->toUrl($helper->getLoginUrl());
+
+    }
+
+    public function facebookCallbackAction()
+    {
+        $config = $this->getServiceLocator()->get('config')['facebook'];
+        $config['callbackUrl'] = $this->url()->fromRoute('user/default', ['controller' => 'auth', 'action' => 'facebook-callback'], ['force_canonical' => true]);
+        FacebookSession::setDefaultApplication($config['appId'], $config['appSecret']);
+        $helper = new FacebookRedirectLoginHelper($config['callbackUrl']);
+
+        try {
+            $session = $helper->getSessionFromRedirect();
+        } catch(\Exception $ex) {
+            $this->flashMessenger()->addErrorMessage("Invalid callback request. Oops. Sorry.");
+            return $this->redirect()->toRoute('home');
+        }
+        if ($session) {
+            // Logged in
+            $request = new FacebookRequest($session, 'GET', '/me');
+            $response = $request->execute();
+            $graphObject = $response->getGraphObject();
+
+            /** @var \Doctrine\ORM\EntityManager $objectManager */
+            $objectManager = $this->getServiceLocator()->get('Doctrine\ORM\EntityManager');
+            /** @var \User\Entity\Auth $auth */
+            $auth = $objectManager
+                ->getRepository('User\Entity\Auth')
+                ->getAuthRow(Auth::PROVIDER_TWITTER, $graphObject->getProperty('id'));
+
+            if ($auth) {
+                $user = $auth->getUser();
+                if (!$user->isActive()) {
+                    $this->flashMessenger()->addSuccessMessage("'User is not active'");
+                    return $this->redirect()->toRoute('home');
+                }
+                $auth->setToken($session->getAccessToken());
+                $auth->setTokenSecret(0);
+                $auth->setTokenType(Auth::TYPE_ACCESS);
+            } else {
+                if (!$this->identity()) {
+                    //create new user
+                    /** @var \User\Entity\User $user */
+                    $user = new \User\Entity\User();
+                    $user->setDisplayName($graphObject->getProperty('id'));
+                    $user->setRole($user::ROLE_USER);
+                    $user->activate();
+                    $objectManager->persist($user);
+                    $objectManager->flush();
+                } else {
+                    //get current authorized user
+                    $user = $this->identity()->getUser();
+                }
+
+                $auth = new \User\Entity\Auth();
+                $auth->setToken($session->getAccessToken());
+                $auth->setTokenSecret(0);
+                $auth->setForeignKey($graphObject->getProperty('id'));
+                $auth->setProvider(Auth::PROVIDER_FACEBOOK);
+                $auth->setTokenType(Auth::TYPE_ACCESS);
+                $auth->setUserId($user->getId());
+                $user->getAuths()->add($auth);
+                $auth->setUser($user);
+            }
+            $objectManager->persist($user);
+            $objectManager->persist($auth);
+            $objectManager->flush();
+            $auth->login($this->getServiceLocator());
+
+            $this->flashMessenger()->addSuccessMessage("You've successfully registered via twitter");
+            return $this->redirect()->toRoute('user/default', ['controller' => 'profile']);
+        }
+
     }
 }
