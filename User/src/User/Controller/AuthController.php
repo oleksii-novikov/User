@@ -76,7 +76,7 @@ class AuthController extends AbstractActionController
                 $this->params()->fromQuery(),
                 unserialize($container->requestToken)
             );
-            //get data about user
+            //get user's data
 //            $twitter = new Twitter([
 //                'accessToken' => $token,
 //                'httpClientOptions' => $config['httpClientOptions'],
@@ -93,10 +93,11 @@ class AuthController extends AbstractActionController
             $auth = $objectManager
                 ->getRepository('User\Entity\Auth')
                 ->getAuthRow(Auth::PROVIDER_TWITTER, $token->user_id);
+
             if ($auth) {
                 $user = $auth->getUser();
                 if (!$user->isActive()) {
-                    $this->flashMessenger()->addSuccessMessage("'User is not active'");
+                    $this->flashMessenger()->addSuccessMessage("User is not active");
                     return $this->redirect()->toRoute('home');
                 }
                 $auth->setToken($token->oauth_token);

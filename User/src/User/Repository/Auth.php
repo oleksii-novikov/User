@@ -21,6 +21,6 @@ class Auth extends EntityRepository
      */
     public function getAuthRow($provider, $foreignKey)
     {
-        return $this->findBy(['provider' => $provider, 'foreignKey' => $foreignKey]);
+        return $this->findOneBy(['provider' => $provider, 'foreignKey' => $foreignKey]);
     }
 } 

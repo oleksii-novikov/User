@@ -17,9 +17,11 @@ Installation
 ```sh
 git clone [git-repo-url] user
 cd user
-#install composer
-composer install
 cp -r User/ path/to/zf2/module/
+```
+For this time you should manually add dependencies from composer.json to yours and then run 
+```sh
+composer update
 ```
 
 ####Add following lines to config/autoload/bjyauthorize.global.php

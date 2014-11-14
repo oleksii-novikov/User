@@ -15,7 +15,6 @@ class ProfileController extends AbstractActionController
 {
     public function indexAction()
     {
-        var_dump($this->identity()->getUser()->getAuths());
         return new ViewModel([]);
     }
 
@@ -45,16 +44,5 @@ class ProfileController extends AbstractActionController
             die('Something is wrong with my credentials!');
         }
         $twitter->usersSearch('twitter')->toValue()[0]->following;
-
-        //workaround fix to work with zendoauth 2.0.2
-//        $curlClient = new \Zend\Http\Client\Adapter\Curl();
-//        $curlClient->setOptions(array(
-//                CURLOPT_SSL_VERIFYHOST => false,
-//                CURLOPT_SSL_VERIFYPEER => false,
-//            )
-//        );
-//        $httpClient = $twitter->getHttpClient();
-//        $httpClient->setAdapter($curlClient);
-//        $twitter->setHttpClient($httpClient);
     }
 } 
